@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="id" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyBlue - Jadwal Penerbangan Modern Nusantara</title>
+    
+    <!-- Tailwind CSS (via CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind Config for Dark Mode, Custom Colors, & Animations -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            400: '#60a5fa',
+                            500: '#3b82f6', 
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        },
+                        dark: {
+                            bg: '#0f172a',
+                            panel: '#1e293b',
+                            border: '#334155'
+                        }
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+                        'glass-dark': '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
+                        'glow': '0 0 15px rgba(59, 130, 246, 0.5)',
+                        'glow-lg': '0 0 25px rgba(59, 130, 246, 0.8)',
+                    },
+                    keyframes: {
+                        flyOut: {
+                            '0%': { transform: 'translate(0, 0) scale(1)', opacity: '1' },
+                            '50%': { transform: 'translate(20px, -20px) scale(1.2)', opacity: '0.5' },
+                            '100%': { transform: 'translate(40px, -40px) scale(0)', opacity: '0' },
+                        },
+                        bounceIn: {
+                            '0%': { transform: 'scale(0)' },
+                            '50%': { transform: 'scale(1.1)' },
+                            '100%': { transform: 'scale(1)' },
+                        }
+                    },
+                    animation: {
+                        'fly-out': 'flyOut 0.6s ease-in-out forwards',
+                        'bounce-in': 'bounceIn 0.3s cubic-bezier(0.68, -0.55, 0.26, 1.55) forwards',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        html { scroll-behavior: smooth; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .chat-scroll::-webkit-scrollbar { width: 6px; }
+        .chat-scroll::-webkit-scrollbar-track { background: transparent; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .dark .chat-scroll::-webkit-scrollbar-thumb { background: #475569; }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .dark .glass {
+            background: rgba(30, 41, 59, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #loading-screen { transition: opacity 0.5s ease, visibility 0.5s; }
+
+        .dashed-line {
+            background-image: linear-gradient(to right, currentColor 50%, transparent 0%);
+            background-position: bottom;
+            background-size: 8px 2px;
+            background-repeat: repeat-x;
+        }
+
+        .check-svg { width: 50px; height: 50px; }
+        .check-circle { stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke-miterlimit: 10; stroke: #10b981; fill: none; animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards; }
+        .check-path { transform-origin: 50% 50%; stroke-dasharray: 48; stroke-dashoffset: 48; animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.6s forwards; }
+        @keyframes stroke { 100% { stroke-dashoffset: 0; } }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-dark-bg text-slate-800 dark:text-slate-200 min-h-screen font-sans antialiased flex flex-col transition-colors duration-300">
+
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 z-[200] bg-brand-600 flex flex-col items-center justify-center">
+        <div class="relative w-24 h-24 mb-4">
+            <div class="absolute inset-0 border-4 border-white/25 border-t-white rounded-full animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-white text-3xl">
+                <i class="fa-solid fa-plane"></i>
+            </div>
+        </div>
+        <h2 class="text-white text-xl font-extrabold tracking-widest animate-pulse">MEMUAT SKYBLUE...</h2>
+    </div>
+
+    <!-- Header & Hero Section -->
+    <div class="bg-gradient-to-br from-brand-700 via-brand-600 to-brand-500 text-white pb-24 relative z-10 rounded-b-[2.5rem] shadow-glass dark:shadow-glass-dark">
+        <header class="px-4 sm:px-6 lg:px-8 py-4 max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 p-2.5 rounded-xl backdrop-blur-sm shadow-sm">
+                    <i class="fa-solid fa-plane-departure text-xl"></i>
+                </div>
+                <h1 class="text-2xl font-extrabold tracking-tight hidden sm:block">SkyBlue<span class="text-brand-100 font-medium">.id</span></h1>
+            </div>
+            
+            <div class="flex items-center gap-3 md:gap-5">
+                <div class="hidden lg:flex flex-col items-end text-xs font-medium text-brand-100 mr-2">
+                    <span id="live-date">...</span>
+                    <span id="live-time" class="font-bold text-white text-sm">...</span>
+                </div>
+
+                <!-- Unique Home Button -->
+                <button onclick="resetApp()" class="relative group overflow-hidden bg-gradient-to-r from-cyan-400 to-brand-500 hover:from-cyan-300 hover:to-brand-400 text-white font-bold py-2 px-5 md:px-6 rounded-full shadow-glow transition-all duration-300 flex items-center gap-2 cursor-pointer">
+                    <span class="relative z-10">Beranda</span>
+                    <i class="fa-solid fa-paper-plane relative z-10 group-hover:animate-fly-out"></i>
+                </button>
+
+                <button onclick="openModal('promo-modal')" class="hidden md:flex items-center gap-2 hover:text-brand-100 transition-colors font-medium cursor-pointer">
+                    <i class="fa-solid fa-tags"></i> Promo
+                </button>
+
+                <button onclick="toggleDarkMode()" id="dark-mode-btn" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center backdrop-blur-sm transition-all cursor-pointer" title="Ubah Tema">
+                    <i class="fa-solid fa-moon text-lg"></i>
+                </button>
+
+                <button onclick="openModal('login-modal')" class="bg-white text-brand-600 px-5 py-2 rounded-full font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all cursor-pointer">
+                    Masuk
+                </button>
+            </div>
+        </header>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-6 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-8 relative">
+            <div class="max-w-2xl z-10">
+                <span class="inline-block py-1 px-3 rounded-full bg-white/20 text-white text-xs font-bold tracking-wider mb-4 border border-white/30 backdrop-blur-md">
+                    <i class="fa-solid fa-circle text-[8px] text-green-300 animate-pulse mr-1"></i> JADWAL 1 MINGGU PENUH
+                </span>
+                <h2 class="text-4xl md:text-5xl font-extrabold leading-tight mb-4 drop-shadow-md">
+                    Terbang Lebih Jauh,<br class="hidden md:block" />Lebih Mudah.
+                </h2>
+                <p class="text-brand-100 text-base md:text-lg font-medium max-w-lg mx-auto sm:mx-0">
+                    Informasi penerbangan domestik terupdate ke seluruh bandara Indonesia. Cek status, rute, dan klaim promonya.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-20 relative z-20 flex-grow w-full pb-20">
+        
+        <!-- Statistics Table Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 mb-6">
+            <div class="glass shadow-glass rounded-2xl p-4 flex flex-col justify-center text-center transform hover:-translate-y-1 transition-transform">
+                <div class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Total Penerbangan</div>
+                <div class="text-2xl md:text-3xl font-extrabold text-brand-600 dark:text-brand-400" id="stat-total">0</div>
+            </div>
+            <div class="glass shadow-glass rounded-2xl p-4 flex flex-col justify-center text-center transform hover:-translate-y-1 transition-transform">
+                <div class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Tepat Waktu</div>
+                <div class="text-2xl md:text-3xl font-extrabold text-emerald-500" id="stat-ontime">0</div>
+            </div>
+            <div class="glass shadow-glass rounded-2xl p-4 flex flex-col justify-center text-center transform hover:-translate-y-1 transition-transform">
+                <div class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Terlambat</div>
+                <div class="text-2xl md:text-3xl font-extrabold text-amber-500" id="stat-delayed">0</div>
+            </div>
+            <div class="glass shadow-glass rounded-2xl p-4 flex flex-col justify-center text-center transform hover:-translate-y-1 transition-transform">
+                <div class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Dibatalkan</div>
+                <div class="text-2xl md:text-3xl font-extrabold text-red-500" id="stat-cancelled">0</div>
+            </div>
+            <div class="glass shadow-glass rounded-2xl p-4 flex flex-col justify-center text-center transform hover:-translate-y-1 transition-transform col-span-2 md:col-span-1">
+                <div class="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Maskapai Aktif</div>
+                <div class="text-2xl md:text-3xl font-extrabold text-brand-600 dark:text-brand-400" id="stat-airlines">6</div>
+            </div>
+        </div>
+
+        <!-- Weather Widget -->
+        <div class="mb-8">
+            <h3 class="text-sm font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider"><i class="fa-solid fa-cloud-sun mr-2"></i>Perkiraan Cuaca Kota Tujuan</h3>
+            <div class="flex overflow-x-auto hide-scrollbar gap-3 pb-2" id="weather-widget"></div>
+        </div>
+
+        <!-- Filter & Search Panel -->
+        <div class="glass shadow-glass rounded-2xl p-3 sm:p-4 flex flex-col lg:flex-row gap-3 mb-6 sticky top-4 z-30">
+            <div class="relative flex-grow">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+                </div>
+                <input type="text" id="search-input" placeholder="Cari rute, maskapai, kota..." 
+                    class="block w-full pl-11 pr-4 py-3 bg-white/50 dark:bg-dark-panel/50 border-0 text-slate-900 dark:text-white rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white dark:focus:bg-dark-panel transition-colors placeholder-slate-500 dark:placeholder-slate-400 font-medium">
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-3 lg:w-auto w-full">
+                <div class="relative min-w-[180px]">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-plane text-slate-400 text-sm"></i>
+                    </div>
+                    <select id="filter-airline" class="block w-full pl-9 pr-8 py-3 bg-white/50 dark:bg-dark-panel/50 border-0 text-slate-700 dark:text-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white dark:focus:bg-dark-panel transition-colors font-medium appearance-none cursor-pointer">
+                        <option value="All">Semua Maskapai</option>
+                        <option value="Garuda Indonesia">Garuda</option>
+                        <option value="Citilink">Citilink</option>
+                        <option value="Lion Air">Lion Air</option>
+                        <option value="Batik Air">Batik Air</option>
+                        <option value="AirAsia">AirAsia</option>
+                        <option value="Super Air Jet">Super Air Jet</option>
+                    </select>
+                </div>
+
+                <div class="relative min-w-[160px]">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-clock text-slate-400 text-sm"></i>
+                    </div>
+                    <select id="filter-status" class="block w-full pl-9 pr-8 py-3 bg-white/50 dark:bg-dark-panel/50 border-0 text-slate-700 dark:text-slate-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:bg-white dark:focus:bg-dark-panel transition-colors font-medium appearance-none cursor-pointer">
+                        <option value="All">Semua Status</option>
+                        <option value="On Time">On Time</option>
+                        <option value="Delayed">Delayed</option>
+                        <option value="Boarding">Boarding</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Day Selection Tabs -->
+        <div class="mb-6 bg-white/60 dark:bg-dark-panel/60 backdrop-blur-md rounded-2xl p-1.5 shadow-sm border border-slate-200 dark:border-dark-border">
+            <div id="tabs-container" class="flex overflow-x-auto hide-scrollbar gap-1 relative z-0"></div>
+        </div>
+
+        <div class="flex justify-between items-end mb-4 px-1">
+            <h3 class="text-xl font-bold" id="result-title">Jadwal Penerbangan</h3>
+            <span class="text-sm font-medium text-slate-500 dark:text-slate-400" id="result-count">Memuat...</span>
+        </div>
+
+        <!-- Flights Grid -->
+        <div id="flights-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden flex-col items-center justify-center py-20 px-4 text-center glass rounded-3xl mt-4">
+            <div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                <i class="fa-solid fa-plane-slash text-3xl text-slate-400"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2">Tidak Ditemukan</h3>
+            <p class="text-slate-500 dark:text-slate-400 text-sm max-w-sm mb-4">Ubah kriteria pencarian atau reset filter Anda.</p>
+            <button onclick="resetAllState()" class="text-brand-600 dark:text-brand-400 font-bold hover:underline cursor-pointer">Reset Filter</button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-dark-panel border-t border-slate-200 dark:border-dark-border mt-auto transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <div class="flex items-center gap-2 mb-4">
+                        <i class="fa-solid fa-plane-departure text-brand-600 text-xl"></i>
+                        <span class="font-extrabold text-xl text-slate-800 dark:text-white">SkyBlue.id</span>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mb-4">Informasi lengkap jadwal penerbangan Nusantara selama satu minggu secara real-time.</p>
+                </div>
+                <div class="md:ml-auto">
+                    <h4 class="font-bold text-slate-800 dark:text-white mb-4">Tautan</h4>
+                    <ul class="space-y-2 text-sm text-slate-500 dark:text-slate-400">
+                        <li><a href="#" class="hover:text-brand-600 transition-colors">Pusat Bantuan</a></li>
+                        <li><a href="#" class="hover:text-brand-600 transition-colors">Syarat & Ketentuan</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-slate-800 dark:text-white mb-4">Berlangganan Info</h4>
+                    <form id="newsletter-form" class="flex flex-col gap-2 relative">
+                        <input type="email" required placeholder="Email Anda..." class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-sm">
+                        <button type="submit" class="w-full bg-slate-900 dark:bg-brand-600 hover:bg-brand-600 text-white py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer">Langganan</button>
+                        <div id="newsletter-msg" class="hidden absolute -bottom-8 left-0 right-0 text-center text-xs font-bold text-emerald-500">Berhasil berlangganan!</div>
+                    </form>
+                </div>
+            </div>
+            <div class="mt-10 pt-6 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-400">
+                &copy; 2026 SkyBlue Indonesia. Hak Cipta Dilindungi.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Chatbot Widget -->
+    <div class="fixed bottom-6 right-6 z-[100] flex flex-col items-end">
+        <div id="chat-window" class="hidden w-80 bg-white dark:bg-dark-panel rounded-2xl shadow-2xl border border-slate-200 dark:border-dark-border mb-4 overflow-hidden flex flex-col transition-all origin-bottom-right transform scale-0">
+            <div class="bg-brand-600 p-3 text-white flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center"><i class="fa-solid fa-robot"></i></div>
+                    <div>
+                        <h4 class="font-bold text-sm">AeroBot</h4>
+                        <p class="text-[10px] text-brand-100 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block"></span> Online</p>
+                    </div>
+                </div>
+                <button onclick="toggleChat()" class="text-white/70 hover:text-white cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="chat-body" class="p-4 h-64 overflow-y-auto chat-scroll bg-slate-50 dark:bg-slate-900/50 flex flex-col gap-3 text-sm">
+                <div class="flex items-end gap-2">
+                    <div class="w-6 h-6 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-[10px] flex-shrink-0"><i class="fa-solid fa-robot"></i></div>
+                    <div class="bg-white dark:bg-slate-800 p-2.5 rounded-2xl rounded-bl-none shadow-sm text-slate-700 dark:text-slate-300 max-w-[80%]">Halo! Ada yang bisa saya bantu terkait jadwal penerbangan?</div>
+                </div>
+            </div>
+            <form id="chat-form" class="p-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-dark-panel flex gap-2">
+                <input type="text" id="chat-input" placeholder="Ketik pesan..." required class="flex-grow px-3 py-2 bg-slate-100 dark:bg-slate-800 border-none rounded-xl text-sm outline-none text-slate-800 dark:text-white">
+                <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 cursor-pointer"><i class="fa-solid fa-paper-plane text-xs"></i></button>
+            </form>
+        </div>
+        <button onclick="toggleChat()" class="w-14 h-14 bg-gradient-to-r from-brand-600 to-cyan-500 rounded-full text-white shadow-glow hover:shadow-glow-lg flex items-center justify-center text-2xl transition-transform hover:scale-110 relative cursor-pointer">
+            <i class="fa-solid fa-comment-dots"></i>
+            <span class="absolute top-0 right-0 w-4 h-4 bg-red-500 border-2 border-white dark:border-dark-bg rounded-full"></span>
+        </button>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-backdrop" class="fixed inset-0 z-[150] bg-slate-900/60 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300" onclick="closeAllModals()"></div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed inset-0 z-[160] hidden items-center justify-center pointer-events-none">
+        <div class="bg-white dark:bg-dark-panel border border-slate-200 dark:border-dark-border rounded-3xl p-6 sm:p-8 w-11/12 max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 pointer-events-auto modal-content relative">
+            <button onclick="closeAllModals()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            <div class="text-center mb-6">
+                <div class="w-12 h-12 bg-brand-100 dark:bg-brand-900/50 rounded-full flex items-center justify-center text-brand-600 dark:text-brand-400 mx-auto mb-3"><i class="fa-solid fa-user text-xl"></i></div>
+                <h2 class="text-2xl font-extrabold text-slate-800 dark:text-white">Masuk Akun</h2>
+            </div>
+            <form id="login-form" class="space-y-4">
+                <div id="login-msg" class="hidden rounded-xl p-3 text-sm font-bold text-center bg-emerald-100 text-emerald-700"></div>
+                <div class="relative">
+                    <i class="fa-solid fa-envelope absolute left-4 top-4 text-slate-400"></i>
+                    <input type="email" required placeholder="Email" class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none text-slate-800 dark:text-white font-medium">
+                </div>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-4 top-4 text-slate-400"></i>
+                    <input type="password" required placeholder="Password" class="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border rounded-xl outline-none text-slate-800 dark:text-white font-medium">
+                </div>
+                <button type="submit" class="w-full bg-brand-600 hover:bg-brand-700 text-white py-3.5 rounded-xl font-bold shadow-md transition-all cursor-pointer mt-2">Masuk Sekarang</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Flight Detail Modal -->
+    <div id="flight-modal" class="fixed inset-0 z-[160] hidden items-center justify-center pointer-events-none">
+        <div class="bg-white dark:bg-dark-panel border border-slate-200 dark:border-dark-border rounded-3xl w-11/12 max-w-md shadow-2xl transform scale-95 opacity-0 transition-all duration-300 pointer-events-auto flex flex-col overflow-hidden modal-content">
+            <div class="bg-gradient-to-r from-brand-600 to-brand-500 p-5 text-white relative">
+                <button onclick="closeAllModals()" class="absolute top-4 right-4 text-white/80 hover:text-white w-8 h-8 rounded-full bg-black/10 flex items-center justify-center cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+                <h2 class="text-lg font-extrabold">Detail Rute</h2>
+                <p class="text-brand-100 text-xs mt-0.5" id="modal-date">Memuat...</p>
+            </div>
+            <div id="flight-modal-body" class="p-5"></div>
+            <div id="flight-modal-footer" class="p-5 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+                <button onclick="simulateBooking()" class="w-full bg-slate-900 dark:bg-brand-600 hover:bg-brand-700 text-white py-3.5 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer">
+                    Lanjutkan <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Promo Collab Modal -->
+    <div id="promo-modal" class="fixed inset-0 z-[160] hidden items-center justify-center pointer-events-none">
+        <div class="bg-white dark:bg-dark-panel border border-slate-200 dark:border-dark-border rounded-3xl p-6 w-11/12 max-w-3xl shadow-2xl transform scale-95 opacity-0 transition-all duration-300 pointer-events-auto modal-content max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-2xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-tags text-brand-500"></i> Promo Spesial</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Kolaborasi Eksklusif SkyBlue x Brand Terkemuka</p>
+                </div>
+                <button onclick="closeAllModals()" class="text-slate-400 hover:text-slate-700 text-xl cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="border border-slate-100 dark:border-slate-700 rounded-2xl p-4 bg-gradient-to-br from-red-50 to-orange-50 dark:from-slate-800 dark:to-slate-800 relative">
+                    <div class="text-red-500 mb-2 text-2xl"><i class="fa-brands fa-cc-mastercard"></i></div>
+                    <h3 class="font-bold text-slate-800 dark:text-white mb-1">Diskon Bank Mega</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Potongan s.d 300rb untuk semua rute domestik.</p>
+                    <button onclick="claimPromo(this)" class="w-full py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-bold transition-colors cursor-pointer">Klaim Promo</button>
+                </div>
+                <div class="border border-slate-100 dark:border-slate-700 rounded-2xl p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-slate-800 dark:to-slate-800 relative">
+                    <div class="text-green-500 mb-2 text-2xl"><i class="fa-solid fa-wallet"></i></div>
+                    <h3 class="font-bold text-slate-800 dark:text-white mb-1">Cashback GoPay</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Cashback 50rb coins minimum transaksi 1 Juta.</p>
+                    <button onclick="claimPromo(this)" class="w-full py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg text-sm font-bold transition-colors cursor-pointer">Klaim Promo</button>
+                </div>
+                <div class="border border-slate-100 dark:border-slate-700 rounded-2xl p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800 relative">
+                    <div class="text-blue-600 mb-2 text-2xl"><i class="fa-solid fa-building-columns"></i></div>
+                    <h3 class="font-bold text-slate-800 dark:text-white mb-1">Cicilan 0% BCA</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Cicilan 0% hingga 6 bulan untuk kelas Bisnis.</p>
+                    <button onclick="claimPromo(this)" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors cursor-pointer">Klaim Promo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        const DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+        const AIRLINES = ['Garuda Indonesia', 'Citilink', 'Batik Air', 'Lion Air', 'Super Air Jet', 'AirAsia'];
+        const STATUSES = ['On Time', 'On Time', 'On Time', 'Delayed', 'Boarding', 'Cancelled'];
+        const CITIES = ['Jakarta', 'Bali', 'Surabaya', 'Medan', 'Makassar', 'Yogyakarta'];
+        const AIRPORTS = {
+            'Jakarta': { code: 'CGK', name: 'Soekarno-Hatta' },
+            'Bali': { code: 'DPS', name: 'Ngurah Rai' },
+            'Surabaya': { code: 'SUB', name: 'Juanda' },
+            'Medan': { code: 'KNO', name: 'Kualanamu' },
+            'Makassar': { code: 'UPG', name: 'Sultan Hasanuddin' },
+            'Yogyakarta': { code: 'YIA', name: 'YIA Kulon Progo' }
+        };
+
+        let allFlights = [];
+        let todayDay = '';
+        let activeDay = '';
+        let isDarkMode = false;
+        let isChatOpen = false;
+
+        function initApp() {
+            setTimeout(() => {
+                const loader = document.getElementById('loading-screen');
+                if (loader) {
+                    loader.style.opacity = '0';
+                    setTimeout(() => loader.style.visibility = 'hidden', 500);
+                }
+            }, 1000);
+
+            const dayIndex = new Date().getDay();
+            todayDay = dayIndex === 0 ? 'Minggu' : DAYS[dayIndex - 1];
+            activeDay = todayDay;
+
+            initDarkMode();
+            startLiveClock();
+            renderWeather();
+            generateData();
+            setupEventListeners();
+            
+            renderTabs();
+            renderFlights();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+
+        function initDarkMode() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                isDarkMode = true;
+                document.documentElement.classList.add('dark');
+                document.getElementById('dark-mode-btn').innerHTML = '<i class="fa-solid fa-sun text-yellow-300 text-lg"></i>';
+            }
+        }
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            if (isDarkMode) {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+                document.getElementById('dark-mode-btn').innerHTML = '<i class="fa-solid fa-sun text-yellow-300 text-lg"></i>';
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+                document.getElementById('dark-mode-btn').innerHTML = '<i class="fa-solid fa-moon text-lg"></i>';
+            }
+        }
+
+        function startLiveClock() {
+            const dateEl = document.getElementById('live-date');
+            const timeEl = document.getElementById('live-time');
+            setInterval(() => {
+                const now = new Date();
+                dateEl.innerText = now.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' });
+                timeEl.innerText = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second:'2-digit' });
+            }, 1000);
+        }
+
+        function renderWeather() {
+            const container = document.getElementById('weather-widget');
+            const weatherIcons = ['fa-sun text-yellow-400', 'fa-cloud-sun text-slate-400', 'fa-cloud-rain text-blue-400'];
+            container.innerHTML = '';
+            CITIES.forEach(city => {
+                const temp = Math.floor(Math.random() * (33 - 26 + 1)) + 26;
+                const icon = weatherIcons[Math.floor(Math.random() * weatherIcons.length)];
+                container.innerHTML += `
+                    <div class="min-w-[120px] glass shadow-sm rounded-xl p-3 flex flex-col items-center flex-shrink-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                        <span class="text-xs font-bold text-slate-600 dark:text-slate-300 mb-1">${city}</span>
+                        <i class="fa-solid ${icon} text-2xl mb-1 mt-1"></i>
+                        <span class="text-sm font-extrabold text-slate-800 dark:text-white">${temp}°C</span>
+                    </div>
+                `;
+            });
+        }
+
+        function generateData() {
+            let idCounter = 1;
+            DAYS.forEach(day => {
+                const numFlights = 12;
+                for (let i = 0; i < numFlights; i++) {
+                    const airline = AIRLINES[Math.floor(Math.random() * AIRLINES.length)];
+                    let originCity = CITIES[Math.floor(Math.random() * CITIES.length)];
+                    let destCity = CITIES[Math.floor(Math.random() * CITIES.length)];
+                    while (originCity === destCity) destCity = CITIES[Math.floor(Math.random() * CITIES.length)];
+
+                    const h = Math.floor(Math.random() * 16) + 6;
+                    const m = Math.random() > 0.5 ? '00' : '30';
+                    const depTime = `${h.toString().padStart(2, '0')}:${m}`;
+                    
+                    const durMins = Math.floor(Math.random() * 90) + 60;
+                    let arrH = h + Math.floor(durMins / 60);
+                    let arrM = parseInt(m) + (durMins % 60);
+                    if (arrM >= 60) { arrH++; arrM -= 60; }
+                    const arrTime = `${arrH.toString().padStart(2, '0')}:${arrM.toString().padStart(2, '0')}`;
+
+                    let status = day === todayDay ? STATUSES[Math.floor(Math.random() * STATUSES.length)] : 'On Time';
+
+                    allFlights.push({
+                        id: `ID-${idCounter.toString().padStart(4, '0')}`,
+                        airline: airline,
+                        flightNum: `${airline.substring(0, 2).toUpperCase()}${Math.floor(Math.random() * 900) + 100}`,
+                        origin: { city: originCity, ...AIRPORTS[originCity] },
+                        dest: { city: destCity, ...AIRPORTS[destCity] },
+                        dep: depTime, arr: arrTime,
+                        duration: `${Math.floor(durMins/60)}j ${durMins%60}m`,
+                        day: day,
+                        status: status,
+                        price: (Math.floor(Math.random() * 12) + 6) * 100000
+                    });
+                    idCounter++;
+                }
+            });
+            allFlights.sort((a, b) => a.dep.localeCompare(b.dep));
+        }
+
+        const formatRupiah = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(num);
+        
+        const getAirlineInfo = (airline) => {
+            const d = {
+                'Garuda Indonesia': { bg: 'bg-blue-600', icon: 'fa-plane-up' },
+                'Citilink': { bg: 'bg-green-500', icon: 'fa-leaf' },
+                'Batik Air': { bg: 'bg-rose-700', icon: 'fa-fan' },
+                'Lion Air': { bg: 'bg-red-500', icon: 'fa-plane' },
+                'Super Air Jet': { bg: 'bg-orange-500', icon: 'fa-fighter-jet' },
+                'AirAsia': { bg: 'bg-red-600', icon: 'fa-paper-plane' }
+            };
+            return d[airline] || { bg: 'bg-brand-500', icon: 'fa-plane' };
+        };
+
+        const getStatusStyle = (status) => {
+            const d = {
+                'On Time': 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+                'Delayed': 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                'Boarding': 'bg-brand-100 text-brand-700 dark:bg-brand-900/30 dark:text-brand-400 animate-pulse',
+                'Cancelled': 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+            };
+            return d[status] || 'bg-slate-100 text-slate-600';
+        };
+
+        function renderTabs() {
+            const container = document.getElementById('tabs-container');
+            container.innerHTML = '';
+            DAYS.forEach(day => {
+                const isAct = day === activeDay;
+                container.innerHTML += `
+                    <button onclick="changeDay('${day}')" class="flex-1 min-w-[100px] py-2.5 px-4 rounded-xl font-bold text-sm transition-all outline-none cursor-pointer 
+                    ${isAct ? 'bg-brand-600 text-white shadow-md' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'}">
+                        ${day} ${day === todayDay ? '<span class="block text-[9px] uppercase opacity-70">Hari Ini</span>' : ''}
+                    </button>
+                `;
+            });
+            document.getElementById('result-title').innerText = `Jadwal ${activeDay}`;
+        }
+
+        function changeDay(day) {
+            activeDay = day;
+            renderTabs();
+            renderFlights();
+        }
+
+        function resetApp() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            resetAllState();
+        }
+
+        function resetAllState() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('filter-airline').value = 'All';
+            document.getElementById('filter-status').value = 'All';
+            activeDay = todayDay;
+            renderTabs();
+            renderFlights();
+        }
+
+        function renderFlights() {
+            const q = document.getElementById('search-input').value.toLowerCase();
+            const fAir = document.getElementById('filter-airline').value;
+            const fStat = document.getElementById('filter-status').value;
+
+            const filtered = allFlights.filter(f => {
+                return f.day === activeDay &&
+                       (fAir === 'All' || f.airline === fAir) &&
+                       (fStat === 'All' || f.status === fStat) &&
+                       (q === '' || f.origin.city.toLowerCase().includes(q) || f.dest.city.toLowerCase().includes(q) || f.airline.toLowerCase().includes(q));
+            });
+
+            // Update Header Stats
+            const dayFiltered = allFlights.filter(f => f.day === activeDay);
+            document.getElementById('stat-total').innerText = dayFiltered.length;
+            document.getElementById('stat-ontime').innerText = dayFiltered.filter(f => f.status === 'On Time').length;
+            document.getElementById('stat-delayed').innerText = dayFiltered.filter(f => f.status === 'Delayed').length;
+            document.getElementById('stat-cancelled').innerText = dayFiltered.filter(f => f.status === 'Cancelled').length;
+
+            const container = document.getElementById('flights-container');
+            const empty = document.getElementById('empty-state');
+            document.getElementById('result-count').innerText = `${filtered.length} Penerbangan`;
+
+            container.innerHTML = '';
+            if (filtered.length === 0) {
+                container.classList.add('hidden');
+                empty.classList.remove('hidden');
+                empty.classList.add('flex');
+                return;
+            }
+            
+            container.classList.remove('hidden');
+            empty.classList.add('hidden');
+            empty.classList.remove('flex');
+
+            filtered.forEach((f, i) => {
+                const style = getAirlineInfo(f.airline);
+                const sStyle = getStatusStyle(f.status);
+                const isCancelled = f.status === 'Cancelled';
+
+                container.innerHTML += `
+                    <div class="bg-white dark:bg-dark-panel rounded-3xl p-1 shadow-glass dark:shadow-none border border-slate-100 dark:border-dark-border transition-all transform hover:-translate-y-1 hover:shadow-xl group">
+                        <div class="p-5 flex flex-col h-full">
+                            <div class="flex justify-between items-start mb-5">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl flex flex-shrink-0 items-center justify-center text-white shadow-sm ${style.bg}"><i class="fa-solid ${style.icon}"></i></div>
+                                    <div>
+                                        <h3 class="font-extrabold text-sm">${f.airline}</h3>
+                                        <p class="text-xs text-slate-400 font-semibold">${f.flightNum}</p>
+                                    </div>
+                                </div>
+                                <div class="text-[10px] font-bold px-2 py-1 rounded-md ${sStyle}">${f.status}</div>
+                            </div>
+
+                            <div class="flex items-center justify-between mb-5">
+                                <div class="text-left w-1/3">
+                                    <div class="text-2xl font-extrabold">${f.dep}</div>
+                                    <div class="text-sm font-bold text-brand-600 dark:text-brand-400">${f.origin.code}</div>
+                                </div>
+                                <div class="w-1/3 flex flex-col items-center px-2 relative">
+                                    <div class="text-[10px] text-slate-400 mb-1 z-10 bg-white dark:bg-dark-panel px-1 rounded">${f.duration}</div>
+                                    <div class="w-full h-px dashed-line text-slate-300 dark:text-slate-600 absolute top-1/2"></div>
+                                    <i class="fa-solid fa-plane text-brand-400 z-10 bg-white dark:bg-dark-panel px-1"></i>
+                                </div>
+                                <div class="text-right w-1/3">
+                                    <div class="text-2xl font-extrabold">${f.arr}</div>
+                                    <div class="text-sm font-bold text-brand-600 dark:text-brand-400">${f.dest.code}</div>
+                                </div>
+                            </div>
+
+                            <div class="flex-grow"></div>
+                            
+                            <div class="pt-4 border-t border-slate-100 dark:border-dark-border flex items-center justify-between">
+                                <div>
+                                    <div class="text-[9px] uppercase font-bold text-slate-400 mb-0.5">Mulai Dari</div>
+                                    <div class="text-lg font-extrabold text-brand-600 dark:text-brand-400">${formatRupiah(f.price)}</div>
+                                </div>
+                                <button onclick="openDetailModal('${f.id}')" ${isCancelled ? 'disabled' : ''} class="${isCancelled ? 'bg-slate-200 dark:bg-slate-700 text-slate-400 cursor-not-allowed' : 'bg-slate-900 dark:bg-brand-600 hover:bg-brand-700 text-white shadow-md cursor-pointer'} px-5 py-2 rounded-xl text-sm font-bold transition-colors flex items-center gap-1">
+                                    ${isCancelled ? 'Batal' : 'Pilih <i class="fa-solid fa-chevron-right text-[10px]"></i>'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function setupEventListeners() {
+            document.getElementById('search-input').addEventListener('input', renderFlights);
+            document.getElementById('filter-airline').addEventListener('change', renderFlights);
+            document.getElementById('filter-status').addEventListener('change', renderFlights);
+            
+            document.getElementById('login-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const msg = document.getElementById('login-msg');
+                msg.classList.remove('hidden');
+                msg.innerHTML = '<i class="fa-solid fa-check-circle"></i> Berhasil masuk!';
+                setTimeout(closeAllModals, 1500);
+            });
+
+            document.getElementById('newsletter-form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const msg = document.getElementById('newsletter-msg');
+                msg.classList.remove('hidden');
+                setTimeout(() => { msg.classList.add('hidden'); document.getElementById('newsletter-form').reset(); }, 3000);
+            });
+        }
+
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            const backdrop = document.getElementById('modal-backdrop');
+            if(id === 'login-modal') document.getElementById('login-msg').classList.add('hidden');
+            
+            backdrop.classList.remove('hidden');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            setTimeout(() => {
+                backdrop.classList.remove('opacity-0');
+                backdrop.classList.add('opacity-100');
+                modal.querySelector('.modal-content').classList.remove('opacity-0', 'scale-95');
+                modal.querySelector('.modal-content').classList.add('opacity-100', 'scale-100');
+            }, 10);
+        }
+
+        function closeAllModals() {
+            const backdrop = document.getElementById('modal-backdrop');
+            const modals = ['login-modal', 'flight-modal', 'promo-modal'];
+            
+            backdrop.classList.remove('opacity-100');
+            backdrop.classList.add('opacity-0');
+            
+            modals.forEach(id => {
+                const m = document.getElementById(id);
+                if(!m.classList.contains('hidden')) {
+                    m.querySelector('.modal-content').classList.remove('opacity-100', 'scale-100');
+                    m.querySelector('.modal-content').classList.add('opacity-0', 'scale-95');
+                    setTimeout(() => { m.classList.add('hidden'); m.classList.remove('flex'); }, 300);
+                }
+            });
+            setTimeout(() => backdrop.classList.add('hidden'), 300);
+        }
+
+        function openDetailModal(id) {
+            const f = allFlights.find(x => x.id === id);
+            if(!f) return;
+            
+            document.getElementById('modal-date').innerText = f.day + ", Jadwal Terkini";
+            const style = getAirlineInfo(f.airline);
+            const sStyle = getStatusStyle(f.status);
+
+            const body = `
+                <div class="flex justify-between items-center mb-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm ${style.bg}"><i class="fa-solid ${style.icon} text-xl"></i></div>
+                        <div>
+                            <h3 class="font-extrabold text-lg leading-none">${f.airline}</h3>
+                            <p class="text-xs text-slate-400 mt-1">${f.flightNum}</p>
+                        </div>
+                    </div>
+                    <div class="text-[10px] font-bold px-2 py-1 rounded-md ${sStyle}">${f.status}</div>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 mb-6 relative">
+                    <div class="flex justify-between mb-2">
+                        <div>
+                            <div class="text-xl font-extrabold">${f.dep}</div>
+                            <div class="text-sm font-bold text-brand-600">${f.origin.city} (${f.origin.code})</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xl font-extrabold">${f.arr}</div>
+                            <div class="text-sm font-bold text-brand-600">${f.dest.city} (${f.dest.code})</div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-center text-slate-400 border-t pt-2 border-slate-200 dark:border-slate-700">Durasi: ${f.duration}</div>
+                </div>
+                <div class="flex justify-between items-end">
+                    <div>
+                        <div class="text-[10px] font-bold text-slate-400 uppercase">Harga Total</div>
+                        <div class="text-2xl font-extrabold text-brand-600 dark:text-brand-400">${formatRupiah(f.price)}</div>
+                    </div>
+                    <div class="text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg">1 Penumpang</div>
+                </div>
+            `;
+            
+            document.getElementById('flight-modal-body').innerHTML = body;
+            document.getElementById('flight-modal-footer').classList.remove('hidden');
+            openModal('flight-modal');
+        }
+
+        function simulateBooking() {
+            const body = document.getElementById('flight-modal-body');
+            document.getElementById('flight-modal-footer').classList.add('hidden');
+            body.innerHTML = `
+                <div class="text-center py-10 flex flex-col items-center">
+                    <i class="fa-solid fa-plane-circle-check text-5xl text-emerald-500 mb-4 animate-bounce"></i>
+                    <h3 class="text-lg font-bold mb-2">Tiket Dipilih!</h3>
+                    <p class="text-sm text-slate-500 mb-4">Mengarahkan ke pembayaran...</p>
+                </div>
+            `;
+            setTimeout(closeAllModals, 2000);
+        }
+
+        function claimPromo(btn) {
+            btn.innerHTML = `
+                <div class="flex justify-center items-center gap-2">
+                    <svg class="check-svg w-5 h-5" viewBox="0 0 50 50">
+                        <circle class="check-circle" cx="25" cy="25" r="23"></circle>
+                        <path class="check-path" fill="none" stroke="#10b981" stroke-width="4" d="M14.1 27.2l7.1 7.2 16.7-16.8"></path>
+                    </svg>
+                    Diklaim
+                </div>
+            `;
+            btn.classList.remove('bg-red-500', 'bg-green-500', 'bg-blue-600', 'hover:bg-red-600', 'hover:bg-green-600', 'hover:bg-blue-700');
+            btn.classList.add('bg-slate-800', 'cursor-default');
+            btn.disabled = true;
+        }
+
+        function toggleChat() {
+            const chat = document.getElementById('chat-window');
+            isChatOpen = !isChatOpen;
+            if(isChatOpen) {
+                chat.classList.remove('hidden');
+                setTimeout(() => chat.classList.remove('scale-0'), 10);
+            } else {
+                chat.classList.add('scale-0');
+                setTimeout(() => chat.classList.add('hidden'), 300);
+            }
+        }
+
+        document.getElementById('chat-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const inp = document.getElementById('chat-input');
+            const txt = inp.value.trim();
+            if(!txt) return;
+            
+            const body = document.getElementById('chat-body');
+            body.innerHTML += `<div class="flex justify-end mb-2"><div class="bg-brand-600 text-white p-2.5 rounded-2xl rounded-br-none shadow-sm max-w-[80%]">${txt}</div></div>`;
+            inp.value = '';
+            body.scrollTop = body.scrollHeight;
+
+            setTimeout(() => {
+                body.innerHTML += `<div class="flex items-end gap-2 mt-2"><div class="w-6 h-6 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center text-[10px] flex-shrink-0"><i class="fa-solid fa-robot"></i></div><div class="bg-white dark:bg-slate-800 p-2.5 rounded-2xl rounded-bl-none shadow-sm text-slate-700 dark:text-slate-300 max-w-[80%]">Terima kasih pesannya! Silakan gunakan menu filter di atas untuk mencari jadwal penerbangan.</div></div>`;
+                body.scrollTop = body.scrollHeight;
+            }, 800);
+        });
+    </script>
+</body>
+</html>
